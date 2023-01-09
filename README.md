@@ -1,2 +1,3 @@
 # Vanilla_JS_Challenge
-Vanilla JS Challenge
+
+Numbel 에서 진행 하는 Vanilla JS Challenge 레포입니다.
