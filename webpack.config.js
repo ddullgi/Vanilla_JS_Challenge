@@ -26,7 +26,7 @@ module.exports = {
       // 엔트리 포인트 부터 연결된 모든 파일을 순회하다 명시된 패턴의 파일들을 만나면 설정된 로더를 이용하여 파일을 돌린다.
       {
         // 로더가 처리해야되는 파일들의 패턴을 설정한다. (정규 표현식 사용)
-        test: /\.css$/, // .css 확장자를 가지는 모든 파일을 로더로 돌리겠다는 의미
+        test: /\.s?[ac]ss$/i, // .css 확장자를 가지는 모든 파일을 로더로 돌리겠다는 의미
         // 사용할 로더를 명시
         // 로더는 한 패턴에 대하여 여러개를 실행할 수 있습니다.
         // 순서는 뒤에서부터 앞으로 실행된다.
@@ -34,6 +34,7 @@ module.exports = {
         use: [
           devMode ? "style-loader" : MiniCssExtractPlugin.loader,
           "css-loader",
+          "sass-loader",
         ],
         // css-loader의 경우 빌드된 js 안에 css 코드를 변환하여 넣어주기만 하기때문에 후처리를 통해 html에 적용되게 설정해야된다.(css-loader만으로는 바로 적용되지 않음)
         // style-loader는 자바스크립트로 변환된 style 코드를 html로 넣어주는 로더이다.
