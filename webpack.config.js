@@ -5,6 +5,7 @@ const childProcess = require("child_process");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const apiMocker = require("connect-api-mocker");
 
 // development 모드일 경우 true 아닐 경우 false를 반환 한다.
 const devMode = process.env.NODE_ENV === "production" ? false : true;
@@ -21,6 +22,42 @@ module.exports = {
     // 빌드 파일의 이름을 동적으로 설정
     filename: "[name].js",
   },
+  //* stats: 메시지 수준을 정할수 있다. 'none', 'errors-only', 'minimal', 'normal', 'verbose' 로 메세지 수준을 조절한다.
+  //* npm start를 돌리고 node 콘솔에 나타나는 메세지 수준 조절
+  stats: "errors-only",
+  //* webpack 서버 설정
+  devServer: {
+    //* 서버가 시작된 후 브라우저를 열도록 dev-server에 지시합니다. 기본 브라우저를 열려면 true로 설정하세요.
+    open: true,
+    //* 개발 서버 포트 번호를 설정한다. 기본값은 8080.
+    port: 8080,
+    //* 다른 백앤드 서버를 사용할 경우 프록시 설정으로 cors error 방지 가능
+    proxy: {
+      "/api": "http://localhost:8081", // 프록시
+    },
+    static: {
+      //* 정적파일을 제공할 경로. 기본값은 웹팩 아웃풋이다.
+      // directory: path.join(__dirname, "dist"),
+      //* 브라우져를 통해 접근하는 경로. 기본값은 '/' 이다.
+      // publicPath: "/",
+    },
+    client: {
+      //* 빌드시 에러나 경고를 브라우져 화면에 표시한다.
+      overlay: {
+        errors: true,
+        warnings: false,
+      },
+      //* 브라우저에서 컴파일 진행률을 백분율로 출력합니다.
+      progress: true,
+    },
+    //* historyApiFallBack: 히스토리 API를 사용하는 SPA 개발시 설정한다. 404가 발생하면 index.html로 리다이렉트한다.
+    historyApiFallback: true,
+    //? 목업 api 만들 수 있음
+    onBeforeSetupMiddleware: (devServer) => {
+      devServer.app.use(apiMocker("/api", "mocks/api"));
+    },
+  },
+
   module: {
     rules: [
       // 엔트리 포인트 부터 연결된 모든 파일을 순회하다 명시된 패턴의 파일들을 만나면 설정된 로더를 이용하여 파일을 돌린다.
@@ -31,11 +68,7 @@ module.exports = {
         // 로더는 한 패턴에 대하여 여러개를 실행할 수 있습니다.
         // 순서는 뒤에서부터 앞으로 실행된다.
         // 즉, css-loader 실행 후 style-loader를 실행한다. (순서 중요!)
-        use: [
-          devMode ? "style-loader" : MiniCssExtractPlugin.loader,
-          "css-loader",
-          "sass-loader",
-        ],
+        use: [devMode ? "style-loader" : MiniCssExtractPlugin.loader, "css-loader", "sass-loader"],
         // css-loader의 경우 빌드된 js 안에 css 코드를 변환하여 넣어주기만 하기때문에 후처리를 통해 html에 적용되게 설정해야된다.(css-loader만으로는 바로 적용되지 않음)
         // style-loader는 자바스크립트로 변환된 style 코드를 html로 넣어주는 로더이다.
       },
