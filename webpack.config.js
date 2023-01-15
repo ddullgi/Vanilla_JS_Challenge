@@ -5,13 +5,16 @@ const childProcess = require("child_process");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+// css 한줄로 압축
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 const apiMocker = require("connect-api-mocker");
 
-// development 모드일 경우 true 아닐 경우 false를 반환 한다.
-const devMode = process.env.NODE_ENV === "production" ? false : true;
+const mode = process.env.NODE_ENV || "development";
 
 module.exports = {
-  mode: "development",
+  mode,
   entry: {
     // 번들러의 시작 파일 설정(의존의 시작점)
     main: "./src/app.js",
@@ -21,6 +24,7 @@ module.exports = {
     path: path.resolve("./dist"),
     // 빌드 파일의 이름을 동적으로 설정
     filename: "[name].js",
+    chunkFilename: "js/[name].chunk.js",
   },
   //* stats: 메시지 수준을 정할수 있다. 'none', 'errors-only', 'minimal', 'normal', 'verbose' 로 메세지 수준을 조절한다.
   //* npm start를 돌리고 node 콘솔에 나타나는 메세지 수준 조절
@@ -50,6 +54,7 @@ module.exports = {
       //* 브라우저에서 컴파일 진행률을 백분율로 출력합니다.
       progress: true,
     },
+    // hot: "only",
     //* historyApiFallBack: 히스토리 API를 사용하는 SPA 개발시 설정한다. 404가 발생하면 index.html로 리다이렉트한다.
     historyApiFallback: true,
     //? 목업 api 만들 수 있음
@@ -68,7 +73,11 @@ module.exports = {
         // 로더는 한 패턴에 대하여 여러개를 실행할 수 있습니다.
         // 순서는 뒤에서부터 앞으로 실행된다.
         // 즉, css-loader 실행 후 style-loader를 실행한다. (순서 중요!)
-        use: [devMode ? "style-loader" : MiniCssExtractPlugin.loader, "css-loader", "sass-loader"],
+        use: [
+          mode === "development" ? "style-loader" : MiniCssExtractPlugin.loader,
+          "css-loader",
+          "sass-loader",
+        ],
         // css-loader의 경우 빌드된 js 안에 css 코드를 변환하여 넣어주기만 하기때문에 후처리를 통해 html에 적용되게 설정해야된다.(css-loader만으로는 바로 적용되지 않음)
         // style-loader는 자바스크립트로 변환된 style 코드를 html로 넣어주는 로더이다.
       },
@@ -132,20 +141,56 @@ module.exports = {
       template: "./public/index.html",
       // 템플릿에서 사용할 변수를 설정해 준다.
       templateParameters: {
-        env: devMode ? "(개발용)" : "",
+        env: mode === "development" ? "(개발용)" : "",
       },
-      minify: devMode
-        ? false
-        : {
-            // 공백 제거
-            collapseWhitespace: true,
-            // 주석 제거
-            removeComments: true,
-          },
+      minify:
+        mode === "development"
+          ? false
+          : {
+              // 공백 제거
+              collapseWhitespace: true,
+              // 주석 제거
+              removeComments: true,
+            },
+    }),
+    // axios는 이미 node_modules에 위치해 있기 때문에 이를 웹팩 아웃풋 폴더에 옮기고 index.html에서 로딩해야한다.
+    new CopyPlugin({
+      patterns: [
+        {
+          from: "./node_modules/axios/dist/axios.min.js",
+          to: "./axios.min.js", // 목적지 파일에 들어간다
+        },
+      ],
     }),
     // output 경로에 이미 빌드 파일이 있다면 output 경로를 비워준다.
     new CleanWebpackPlugin(),
     // 원래 빌드 결과인 js 파일에 css가 포함되어 있는데 이를 분리해준다.
-    ...(devMode ? [] : [new MiniCssExtractPlugin({ filename: "[name].css" })]),
+    ...(mode === "development"
+      ? []
+      : [new MiniCssExtractPlugin({ filename: "[name].css", chunkFilename: "[id].css" })]),
   ],
+  //? 최적화
+  optimization: {
+    // 코드 압축
+    minimizer:
+      mode === "production"
+        ? [
+            new CssMinimizerPlugin(),
+            new TerserPlugin({
+              terserOptions: {
+                compress: {
+                  drop_console: true,
+                },
+              },
+            }),
+          ]
+        : [],
+    splitChunks: {
+      chunks: "all",
+    },
+  },
+  //* axios같은 써드파티 라이브러리다. 패키지로 제공될때 이미 빌드 과정을 거쳤기 때문에 빌드 프로세스에서 제외하는 것이 좋다. 웹팩 설정중 externals가 바로 이러한 기능을 제공한다.
+  externals: {
+    axios: "axios",
+  },
 };
