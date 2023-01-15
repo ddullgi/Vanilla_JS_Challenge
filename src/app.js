@@ -1,17 +1,26 @@
 import "./app.css";
-// import nyancat from "./nyancat.jpg";
-import axios from "axios";
+import form from "./form";
+import result from "./result";
+
+let resultEL;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const res = await axios.get("/api/users");
-  console.log(res.data);
+  const formEL = document.createElement("div");
+  formEL.innerHTML = form.render();
+  document.body.appendChild(formEL);
 
-  document.body.innerHTML = (res.data || [])
-    .map((user) => {
-      return `<div>${user.id}: ${user.name}</div>`;
-    })
-    .join("");
+  resultEL = document.createElement("div");
+  resultEL.innerHTML = await result.render();
+  document.body.appendChild(resultEL);
 });
+
+// if (module.hot) {
+//   console.log("핫 모듈 켜짐");
+
+//   module.hot.accept("./result", async () => {
+//     resultEL.innerHTML = await result.render();
+//   });
+// }
 
 // webpack의 모드 정보를 출력해준다.
 // console.log(process.env.NODE_ENV);
