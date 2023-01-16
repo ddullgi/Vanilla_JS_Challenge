@@ -1,6 +1,6 @@
-import "./app.css";
-import form from "./form";
-import result from "./result";
+import "@/app.css";
+import form from "@/form";
+import result from "@/result";
 
 let resultEL;
 

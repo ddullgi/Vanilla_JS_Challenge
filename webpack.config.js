@@ -10,6 +10,7 @@ const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const apiMocker = require("connect-api-mocker");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 
 const mode = process.env.NODE_ENV || "development";
 
@@ -17,8 +18,9 @@ module.exports = {
   mode,
   entry: {
     // 번들러의 시작 파일 설정(의존의 시작점)
-    main: "./src/app.js",
+    main: "./src/app.ts",
   },
+  devtool: "inline-source-map",
   output: {
     // 빌드 파일의 위치 설정
     path: path.resolve("./dist"),
@@ -192,5 +194,13 @@ module.exports = {
   //* axios같은 써드파티 라이브러리다. 패키지로 제공될때 이미 빌드 과정을 거쳤기 때문에 빌드 프로세스에서 제외하는 것이 좋다. 웹팩 설정중 externals가 바로 이러한 기능을 제공한다.
   externals: {
     axios: "axios",
+  },
+  resolve: {
+    plugins: [
+      new TsconfigPathsPlugin({
+        extensions: [".js", ".ts"],
+      }),
+    ],
+    extensions: [".js", ".ts"],
   },
 };
