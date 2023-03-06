@@ -1,17 +1,39 @@
 import "@/app.css";
 import form from "@/form";
-import result from "@/result";
+import Hompage from "./page/Hompage";
+import NotFound from "./page/NotFound";
 
-let resultEL;
+const Tag = "[app.ts]";
+
+window.addEventListener("popstate", function (event) {
+  console.log(Tag);
+  const path = window.location.pathname;
+  const formEL = document.createElement("div");
+
+  switch (path) {
+    case "/home":
+      // showHomePage();
+      formEL.innerHTML = Hompage.render();
+      document.body.appendChild(formEL);
+      console.log(Tag, "Hompage");
+      break;
+    // case "/about":
+    //   showAboutPage();
+    //   break;
+    // case "/contact":
+    //   showContactPage();
+    //   break;
+    default:
+      formEL.innerHTML = NotFound.render();
+      document.body.appendChild(formEL);
+      console.log(Tag, "NotFound");
+  }
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
   const formEL = document.createElement("div");
   formEL.innerHTML = form.render();
   document.body.appendChild(formEL);
-
-  resultEL = document.createElement("div");
-  resultEL.innerHTML = await result.render();
-  document.body.appendChild(resultEL);
 });
 
 // if (module.hot) {
